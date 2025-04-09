@@ -40,24 +40,46 @@ export const navigationManager = {
                 if (mainNav.classList.contains('active')) {
                     icon.classList.remove('fa-bars');
                     icon.classList.add('fa-times');
+                    // Accessibility
+                    mobileMenuToggle.setAttribute('aria-expanded', 'true');
+                    mobileMenuToggle.setAttribute('aria-label', 'Close menu');
                 } else {
                     icon.classList.remove('fa-times');
                     icon.classList.add('fa-bars');
+                    // Accessibility
+                    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                    mobileMenuToggle.setAttribute('aria-label', 'Open menu');
                 }
             }
         }
         
+        // Setup toggle button for accessibility
+        if (mobileMenuToggle) {
+            mobileMenuToggle.setAttribute('aria-controls', 'main-nav');
+            mobileMenuToggle.setAttribute('aria-expanded', 'false');
+            mobileMenuToggle.setAttribute('aria-label', 'Open menu');
+            mobileMenuToggle.setAttribute('role', 'button');
+            mobileMenuToggle.setAttribute('tabindex', '0');
+        }
+        
         // Handle touch events for mobile devices
         if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('touchstart', (e) => {
+            // Single function for both click and touch
+            const handleToggle = (e) => {
                 e.preventDefault();
                 toggleMobileMenu();
-            }, { passive: false });
+            };
             
-            // Click event for desktop
-            mobileMenuToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleMobileMenu();
+            // Use passive: false to enable preventDefault on touch events
+            mobileMenuToggle.addEventListener('touchstart', handleToggle, { passive: false });
+            mobileMenuToggle.addEventListener('click', handleToggle);
+            
+            // Support keyboard navigation
+            mobileMenuToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleMobileMenu();
+                }
             });
         }
         
@@ -101,12 +123,19 @@ export const navigationManager = {
                 // If click is outside the nav and the toggle button
                 if (!mainNav.contains(e.target) && !mobileToggle.contains(e.target)) {
                     mainNav.classList.remove('active');
+                    document.body.classList.remove('menu-open');
                     
                     // Reset icon
                     const icon = mobileToggle.querySelector('i');
                     if (icon && icon.classList.contains('fa-times')) {
                         icon.classList.remove('fa-times');
                         icon.classList.add('fa-bars');
+                    }
+                    
+                    // Accessibility
+                    if (mobileToggle) {
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                        mobileToggle.setAttribute('aria-label', 'Open menu');
                     }
                 }
             }
@@ -121,6 +150,7 @@ export const navigationManager = {
                     const mainNav = document.querySelector('.main-nav');
                     if (mainNav && mainNav.classList.contains('active')) {
                         mainNav.classList.remove('active');
+                        document.body.classList.remove('menu-open');
                         
                         // Reset icon
                         const mobileToggle = document.querySelector('.mobile-nav-toggle');
@@ -130,6 +160,10 @@ export const navigationManager = {
                                 icon.classList.remove('fa-times');
                                 icon.classList.add('fa-bars');
                             }
+                            
+                            // Accessibility
+                            mobileToggle.setAttribute('aria-expanded', 'false');
+                            mobileToggle.setAttribute('aria-label', 'Open menu');
                         }
                     }
                 }

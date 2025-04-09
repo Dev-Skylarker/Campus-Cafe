@@ -4,20 +4,32 @@
 
 import storageManager from './utils/storage.js';
 import { database, auth } from './utils/firebase.js';
+import { navigationManager } from './utils/navigation.js';
 
 // DOM Elements
-const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
-const mainNav = document.querySelector('.main-nav');
 const contactForm = document.getElementById('contact-form');
 const featuredDishesContainer = document.getElementById('featured-dishes-container');
+
+// Initialize navigation
+document.addEventListener('DOMContentLoaded', () => {
+    navigationManager.init();
+    
+    // Initialize other components
+    loadFeaturedDishes();
+});
 
 // Authentication check - this should run first to ensure authorized access
 function checkAuth() {
     auth.onAuthStateChanged((user) => {
         if (!user) {
-            // User is not signed in, redirect to login page
-            storageManager.clearAuthData();
-            window.location.href = 'login.html';
+            // User is not signed in, redirect to login page if on a protected page
+            const protectedPages = ['orders.html', 'admin.html'];
+            const currentPage = window.location.pathname.split('/').pop();
+            
+            if (protectedPages.includes(currentPage)) {
+                storageManager.clearAuthData();
+                window.location.href = 'login.html';
+            }
         } else {
             // User is signed in, save to local storage and update UI
             storageManager.saveAuthenticatedUser(user);
@@ -83,33 +95,6 @@ const currencyUtil = {
         return `KSH ${price.toFixed(2)}`;
     }
 };
-
-// Toggle mobile navigation
-if (mobileNavToggle) {
-    mobileNavToggle.addEventListener('click', () => {
-        mainNav.classList.toggle('active');
-        
-        // Change icon based on menu state
-        const icon = mobileNavToggle.querySelector('i');
-        if (mainNav.classList.contains('active')) {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-        } else {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-        }
-    });
-}
-
-// Close mobile nav when clicking outside
-document.addEventListener('click', (e) => {
-    if (mainNav && mainNav.classList.contains('active') && !e.target.closest('.mobile-nav-toggle') && !e.target.closest('.main-nav')) {
-        mainNav.classList.remove('active');
-        const icon = mobileNavToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-    }
-});
 
 /**
  * Validate email format
