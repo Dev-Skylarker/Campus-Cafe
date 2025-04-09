@@ -1,174 +1,84 @@
 /**
- * Navigation Utility for Campus Cafe
- * Ensures consistent navigation across all pages
+ * Navigation and Auth State Management Utils for Campus Cafe
  */
 
 import { auth } from './firebase.js';
+import storageManager from './storage.js';
 
+// Export the navigation manager
 export const navigationManager = {
     /**
-     * Initialize the navigation 
+     * Initialize navigation and auth listeners
      */
     init() {
-        this.updateNavigation();
         this.setupMobileNav();
+        this.setupUserState();
         this.setupLogout();
-        this.setupMobileMenuClosing();
-        
-        // Listen for auth state changes to update user-specific menu items
-        auth.onAuthStateChanged(user => {
-            this.updateUserStatus(user);
-        });
+        this.setupCartBadge();
+        this.listenForAuthChanges();
     },
     
     /**
-     * Setup mobile navigation toggle
+     * Setup mobile navigation
      */
     setupMobileNav() {
-        const mobileMenuToggle = document.querySelector('.mobile-nav-toggle');
+        const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
         const mainNav = document.querySelector('.main-nav');
-        const body = document.body;
         
-        // Function to toggle mobile menu
-        function toggleMobileMenu() {
-            mainNav.classList.toggle('active');
-            body.classList.toggle('menu-open');
-            
-            // Toggle between hamburger and close icon
-            const icon = mobileMenuToggle.querySelector('i');
-            if (icon) {
+        if (mobileNavToggle && mainNav) {
+            // Toggle menu on button click
+            mobileNavToggle.addEventListener('click', () => {
+                mainNav.classList.toggle('active');
+                document.body.classList.toggle('menu-open');
+                
+                // Change icon based on menu state
+                const icon = mobileNavToggle.querySelector('i');
                 if (mainNav.classList.contains('active')) {
                     icon.classList.remove('fa-bars');
                     icon.classList.add('fa-times');
-                    // Accessibility
-                    mobileMenuToggle.setAttribute('aria-expanded', 'true');
-                    mobileMenuToggle.setAttribute('aria-label', 'Close menu');
                 } else {
                     icon.classList.remove('fa-times');
                     icon.classList.add('fa-bars');
-                    // Accessibility
-                    mobileMenuToggle.setAttribute('aria-expanded', 'false');
-                    mobileMenuToggle.setAttribute('aria-label', 'Open menu');
-                }
-            }
-        }
-        
-        // Setup toggle button for accessibility
-        if (mobileMenuToggle) {
-            mobileMenuToggle.setAttribute('aria-controls', 'main-nav');
-            mobileMenuToggle.setAttribute('aria-expanded', 'false');
-            mobileMenuToggle.setAttribute('aria-label', 'Open menu');
-            mobileMenuToggle.setAttribute('role', 'button');
-            mobileMenuToggle.setAttribute('tabindex', '0');
-        }
-        
-        // Handle touch events for mobile devices
-        if (mobileMenuToggle) {
-            // Single function for both click and touch
-            const handleToggle = (e) => {
-                e.preventDefault();
-                toggleMobileMenu();
-            };
-            
-            // Use passive: false to enable preventDefault on touch events
-            mobileMenuToggle.addEventListener('touchstart', handleToggle, { passive: false });
-            mobileMenuToggle.addEventListener('click', handleToggle);
-            
-            // Support keyboard navigation
-            mobileMenuToggle.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleMobileMenu();
                 }
             });
-        }
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (mainNav && mainNav.classList.contains('active') && 
-                !mainNav.contains(e.target) && 
-                !mobileMenuToggle.contains(e.target)) {
-                toggleMobileMenu();
-            }
-        });
-        
-        // Close menu with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && mainNav && mainNav.classList.contains('active')) {
-                toggleMobileMenu();
-            }
-        });
-        
-        // Close menu when clicking on navigation links
-        const navLinks = mainNav ? mainNav.querySelectorAll('a') : [];
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768 && mainNav.classList.contains('active')) {
-                    toggleMobileMenu();
-                }
-            });
-        });
-    },
-    
-    /**
-     * Setup functionality to close mobile menu when clicking outside
-     */
-    setupMobileMenuClosing() {
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const mainNav = document.querySelector('.main-nav');
-            const mobileToggle = document.querySelector('.mobile-nav-toggle');
             
-            if (mainNav && mainNav.classList.contains('active')) {
-                // If click is outside the nav and the toggle button
-                if (!mainNav.contains(e.target) && !mobileToggle.contains(e.target)) {
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (mainNav.classList.contains('active') && 
+                    !e.target.closest('.mobile-nav-toggle') && 
+                    !e.target.closest('.main-nav')) {
+                    
                     mainNav.classList.remove('active');
                     document.body.classList.remove('menu-open');
                     
-                    // Reset icon
-                    const icon = mobileToggle.querySelector('i');
-                    if (icon && icon.classList.contains('fa-times')) {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
+                    const icon = mobileNavToggle.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+            
+            // Close menu when pressing Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mainNav.classList.contains('active')) {
+                    mainNav.classList.remove('active');
+                    document.body.classList.remove('menu-open');
                     
-                    // Accessibility
-                    if (mobileToggle) {
-                        mobileToggle.setAttribute('aria-expanded', 'false');
-                        mobileToggle.setAttribute('aria-label', 'Open menu');
-                    }
+                    const icon = mobileNavToggle.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
                 }
-            }
-        });
-        
-        // Close menu on resize to desktop
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (window.innerWidth > 768) {
-                    const mainNav = document.querySelector('.main-nav');
-                    if (mainNav && mainNav.classList.contains('active')) {
-                        mainNav.classList.remove('active');
-                        document.body.classList.remove('menu-open');
-                        
-                        // Reset icon
-                        const mobileToggle = document.querySelector('.mobile-nav-toggle');
-                        if (mobileToggle) {
-                            const icon = mobileToggle.querySelector('i');
-                            if (icon && icon.classList.contains('fa-times')) {
-                                icon.classList.remove('fa-times');
-                                icon.classList.add('fa-bars');
-                            }
-                            
-                            // Accessibility
-                            mobileToggle.setAttribute('aria-expanded', 'false');
-                            mobileToggle.setAttribute('aria-label', 'Open menu');
-                        }
-                    }
-                }
-            }, 250); // Debounce resize events
-        });
+            });
+        }
+    },
+    
+    /**
+     * Set up user state based on local storage
+     */
+    setupUserState() {
+        const user = storageManager.getAuthenticatedUser();
+        if (user) {
+            this.updateUserStatus(user);
+        }
     },
     
     /**
@@ -183,6 +93,12 @@ export const navigationManager = {
                 
                 // Sign out from Firebase
                 auth.signOut().then(() => {
+                    // Clear local user data
+                    storageManager.clearAuthData();
+                    
+                    // Update UI for logged out state
+                    this.updateUserStatus(null);
+                    
                     // Redirect to home page after logout
                     window.location.href = 'index.html';
                 }).catch(error => {
@@ -194,28 +110,81 @@ export const navigationManager = {
     },
     
     /**
-     * Update navigation based on current page
+     * Setup cart badge from local storage
      */
-    updateNavigation() {
-        const currentPath = window.location.pathname;
-        const pageName = currentPath.split('/').pop() || 'index.html';
+    setupCartBadge() {
+        const cartData = JSON.parse(localStorage.getItem('campus_cafe_cart'));
+        const badges = document.querySelectorAll('.cart-badge');
         
-        // Find all nav links
-        const navLinks = document.querySelectorAll('.main-nav a');
-        
-        // Remove active class from all links
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        // Add active class to current page link
-        navLinks.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href === pageName || 
-                (pageName === 'index.html' && (href === '/' || href === 'index.html' || href === ''))) {
-                link.classList.add('active');
+        if (cartData && badges) {
+            badges.forEach(badge => {
+                badge.textContent = cartData.totalItems || 0;
+            });
+        }
+    },
+    
+    /**
+     * Listen for auth state changes
+     */
+    listenForAuthChanges() {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                storageManager.saveAuthenticatedUser(user);
+                this.updateUserStatus(user);
+                
+                // Create or update user profile if needed
+                this.createUserProfile(user);
+            } else {
+                // User is signed out
+                storageManager.clearAuthData();
+                this.updateUserStatus(null);
             }
         });
+    },
+    
+    /**
+     * Create user profile in header
+     * @param {Object} user - Firebase auth user
+     */
+    createUserProfile(user) {
+        const headerContainer = document.querySelector('header .container');
+        
+        if (headerContainer && !document.querySelector('.user-profile')) {
+            const userProfileElement = document.createElement('div');
+            userProfileElement.className = 'user-profile';
+            userProfileElement.innerHTML = `
+                <img src="${user.photoURL || 'assets/default-user.png'}" alt="${user.displayName || 'User'}" class="user-avatar">
+                <div class="user-dropdown">
+                    <div class="user-info">
+                        <span class="user-name">${user.displayName || 'User'}</span>
+                        <span class="user-email">${user.email}</span>
+                    </div>
+                    <button id="sign-out-btn" class="btn btn-small">Sign Out</button>
+                </div>
+            `;
+            
+            // Insert after theme toggle
+            const themeToggle = headerContainer.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.after(userProfileElement);
+            } else {
+                headerContainer.appendChild(userProfileElement);
+            }
+            
+            // Add event listener for sign out
+            document.getElementById('sign-out-btn').addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    // Sign-out successful, clear storage and redirect to login page
+                    storageManager.clearAuthData();
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    // An error happened
+                    console.error('Sign out error:', error);
+                    alert('Error signing out. Please try again.');
+                });
+            });
+        }
     },
     
     /**
@@ -225,24 +194,24 @@ export const navigationManager = {
     updateUserStatus(user) {
         const loginLink = document.querySelector('.login-link');
         const logoutLink = document.querySelector('.logout-link');
-        const ordersLink = document.querySelector('a[href="orders.html"]');
         const userDisplay = document.querySelector('.user-display');
+        const ordersLink = document.querySelector('a[href="orders.html"]');
         
         if (user) {
             // User is logged in
             if (loginLink) loginLink.style.display = 'none';
-            if (logoutLink) logoutLink.style.display = 'block';
-            if (ordersLink) ordersLink.style.display = 'block';
+            if (logoutLink) logoutLink.style.display = 'inline-flex';
+            if (ordersLink) ordersLink.style.display = 'flex';
             
             // Display user name if available
             if (userDisplay) {
-                const displayName = user.displayName || user.email || 'User';
+                const displayName = user.displayName || user.email.split('@')[0] || 'User';
                 userDisplay.textContent = displayName;
-                userDisplay.style.display = 'block';
+                userDisplay.style.display = 'inline-block';
             }
         } else {
             // User is logged out
-            if (loginLink) loginLink.style.display = 'block';
+            if (loginLink) loginLink.style.display = 'inline-flex';
             if (logoutLink) logoutLink.style.display = 'none';
             if (userDisplay) userDisplay.style.display = 'none';
         }

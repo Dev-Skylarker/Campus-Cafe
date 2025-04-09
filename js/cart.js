@@ -2,6 +2,9 @@
  * Cart Page JavaScript for Campus Cafe
  */
 
+import { navigationManager } from './utils/navigation.js';
+import { cartManager } from './utils/cart.js';
+
 // DOM Elements
 const cartItemsContainer = document.getElementById('cartItemsContainer');
 const emptyCartMessage = document.getElementById('emptyCartMessage');
@@ -287,9 +290,14 @@ function showOrderConfirmation(order) {
                 <p>Thank you, ${order.customerName}!</p>
                 <p>Your order #${order.id} has been placed and will be ready for collection at ${formatCollectionTime(order.collectionTime)}.</p>
                 <p><strong>Collection Location:</strong> ${formatCollectionLocation(order.collectionLocation)}</p>
+                <div class="order-status-link">
+                    <p>Track your order status in real-time:</p>
+                    <a href="orders.html?order=${order.id}" class="btn btn-primary order-status-btn">
+                        <i class="fas fa-clipboard-check"></i> View Order Status
+                    </a>
+                </div>
                 <div class="order-confirmation-actions">
-                    <a href="orders.html" class="btn btn-secondary">View My Orders</a>
-                    <a href="menu.html" class="btn btn-primary">Back to Menu</a>
+                    <a href="menu.html" class="btn btn-secondary">Continue Shopping</a>
                 </div>
             </div>
         </div>
@@ -299,6 +307,7 @@ function showOrderConfirmation(order) {
     const closeBtn = confirmationModal.querySelector('.close-modal');
     closeBtn.addEventListener('click', () => {
         confirmationModal.style.display = 'none';
+        window.location.href = 'orders.html?order=' + order.id;
     });
     
     // Show modal
@@ -308,6 +317,7 @@ function showOrderConfirmation(order) {
     window.addEventListener('click', (e) => {
         if (e.target === confirmationModal) {
             confirmationModal.style.display = 'none';
+            window.location.href = 'orders.html?order=' + order.id;
         }
     });
 }
@@ -348,5 +358,11 @@ function formatCollectionTime(time) {
     }
 }
 
-// Initialize cart page when DOM is loaded
-document.addEventListener('DOMContentLoaded', initCart); 
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize navigation
+    navigationManager.init();
+    
+    // Initialize cart
+    initCart();
+}); 

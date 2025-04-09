@@ -194,12 +194,38 @@ const storageManager = (function() {
         }
         
         try {
-            await menuItemsRef.child(item.id).set({
+            // Ensure all required fields are present
+            const menuItem = {
                 ...item,
-                imageUrl: item.imageUrl || 'default-image-url.jpg' // Ensure image URL is stored
-            });
-            console.log('Menu item saved:', item.id);
-            return item;
+                id: item.id,
+                name: item.name,
+                category: item.category,
+                price: typeof item.price === 'number' ? item.price : parseFloat(item.price),
+                description: item.description || '',
+                imageUrl: item.imageUrl || item.image || 'assets/placeholder-food.png',
+                ingredients: item.ingredients || [],
+                availability: item.availability || 'available',
+                featured: item.featured || false,
+                updatedAt: Date.now()
+            };
+            
+            // Save to Firebase
+            await menuItemsRef.child(item.id).set(menuItem);
+            
+            // Also update local storage for offline use
+            const localItems = JSON.parse(localStorage.getItem('campus_cafe_menu_items') || '[]');
+            const existingItemIndex = localItems.findIndex(i => i.id === item.id);
+            
+            if (existingItemIndex !== -1) {
+                localItems[existingItemIndex] = menuItem;
+            } else {
+                localItems.push(menuItem);
+            }
+            
+            localStorage.setItem('campus_cafe_menu_items', JSON.stringify(localItems));
+            
+            console.log('Menu item saved successfully:', item.id);
+            return menuItem;
         } catch (error) {
             console.error('Error saving menu item:', error);
             throw error;

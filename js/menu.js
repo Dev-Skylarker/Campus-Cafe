@@ -108,18 +108,28 @@ function setupEventListeners() {
             
             // Debounce to avoid too many updates
             debounceTimeout = setTimeout(() => {
-                const searchTerm = e.target.value.trim().toLowerCase();
-                currentSearchTerm = searchTerm;
-                filterMenuItems(currentCategory, searchTerm);
+                try {
+                    const searchTerm = e.target.value.trim().toLowerCase();
+                    currentSearchTerm = searchTerm;
+                    filterMenuItems(currentCategory, searchTerm);
+                } catch (error) {
+                    console.error('Error handling search input:', error);
+                    displayErrorMessage('Error processing your search. Please try again.');
+                }
             }, 200); // 200ms debounce time
         });
         
         // Also handle Enter key
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                const searchTerm = e.target.value.trim().toLowerCase();
-                currentSearchTerm = searchTerm;
-                filterMenuItems(currentCategory, searchTerm);
+                try {
+                    const searchTerm = e.target.value.trim().toLowerCase();
+                    currentSearchTerm = searchTerm;
+                    filterMenuItems(currentCategory, searchTerm);
+                } catch (error) {
+                    console.error('Error handling search input:', error);
+                    displayErrorMessage('Error processing your search. Please try again.');
+                }
             }
         });
     }
@@ -127,20 +137,40 @@ function setupEventListeners() {
     // Search button click
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            currentSearchTerm = searchTerm;
-            filterMenuItems(currentCategory, searchTerm);
+            try {
+                if (!searchInput) {
+                    console.error('Search input element not found');
+                    return;
+                }
+                
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                currentSearchTerm = searchTerm;
+                filterMenuItems(currentCategory, searchTerm);
+                
+                // Blur the search input to hide mobile keyboard
+                searchInput.blur();
+            } catch (error) {
+                console.error('Error handling search button click:', error);
+                displayErrorMessage('Error processing your search. Please try again.');
+            }
         });
     }
 
     // Category tabs
-    menuTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const category = tab.dataset.category;
-            setActiveTab(tab);
-            filterMenuItems(category, currentSearchTerm);
+    if (menuTabs && menuTabs.length) {
+        menuTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                try {
+                    const category = tab.dataset.category;
+                    setActiveTab(tab);
+                    filterMenuItems(category, currentSearchTerm);
+                } catch (error) {
+                    console.error('Error handling category tab click:', error);
+                    displayErrorMessage('Error filtering menu. Please try again.');
+                }
+            });
         });
-    });
+    }
 
     // Close modals
     if (closeModalBtn) {
@@ -205,34 +235,69 @@ function setActiveTab(activeTab) {
  * @param {string} searchTerm - Search term to filter by
  */
 function filterMenuItems(category, searchTerm = '') {
+    // Validate inputs
+    if (!Array.isArray(allMenuItems)) {
+        console.error('Menu items data is not an array:', allMenuItems);
+        displayErrorMessage('Error loading menu data. Please refresh the page.');
+        return;
+    }
+
     // Use the cached menu items for filtering
     let filteredItems = [...allMenuItems];
 
     // Filter by category
-    if (category !== 'all') {
-        filteredItems = filteredItems.filter(item => item.category === category);
+    if (category && category !== 'all') {
+        filteredItems = filteredItems.filter(item => item && item.category === category);
     }
 
     // Filter by search term
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim() !== '') {
+        const searchTermLower = searchTerm.trim().toLowerCase();
         filteredItems = filteredItems.filter(item => {
-            return (
-                item.name.toLowerCase().includes(searchTerm) ||
-                item.description.toLowerCase().includes(searchTerm) ||
-                (item.ingredients && item.ingredients.some(ing => 
-                    ing.toLowerCase().includes(searchTerm)
-                ))
-            );
+            if (!item) return false;
+            
+            // Safely check each field for the search term
+            const nameMatch = item.name ? item.name.toLowerCase().includes(searchTermLower) : false;
+            const descMatch = item.description ? item.description.toLowerCase().includes(searchTermLower) : false;
+            
+            // Safely check ingredients if they exist
+            let ingredientsMatch = false;
+            if (Array.isArray(item.ingredients)) {
+                ingredientsMatch = item.ingredients.some(ing => 
+                    ing && typeof ing === 'string' && ing.toLowerCase().includes(searchTermLower)
+                );
+            }
+            
+            return nameMatch || descMatch || ingredientsMatch;
         });
     }
 
     // Filter out unavailable items
     filteredItems = filteredItems.filter(item => 
-        !item.availability || item.availability === 'available'
+        item && (!item.availability || item.availability === 'available')
     );
 
     // Display filtered items with animation for new items
     displayMenuItems(filteredItems);
+}
+
+/**
+ * Display error message in the menu container
+ * @param {string} message - Error message to display
+ */
+function displayErrorMessage(message) {
+    if (!menuContainer) return;
+    
+    menuContainer.innerHTML = `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>${message}</p>
+        </div>
+    `;
+    
+    if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+    }
 }
 
 /**
@@ -243,7 +308,7 @@ function displayMenuItems(items) {
     if (!menuContainer) return;
 
     // Store current items IDs to identify new ones
-    const currentItemIds = Array.from(menuContainer.querySelectorAll('.menu-item'))
+    const currentItemIds = Array.from(menuContainer.querySelectorAll('.menu-item-card'))
         .map(el => el.dataset.id);
     
     // Clear container
@@ -289,7 +354,7 @@ function displayMenuItems(items) {
     });
 
     // Add animation effects with staggered delays
-    const menuElements = menuContainer.querySelectorAll('.menu-item');
+    const menuElements = menuContainer.querySelectorAll('.menu-item-card');
     menuElements.forEach((el, index) => {
         // Only animate new items
         if (el.classList.contains('new-item')) {
@@ -307,43 +372,56 @@ function displayMenuItems(items) {
  */
 function createMenuItem(item) {
     const menuItem = document.createElement('div');
-    menuItem.className = 'menu-item';
+    menuItem.className = 'menu-item-card';
     menuItem.dataset.id = item.id;
     menuItem.dataset.category = item.category;
 
     // Get the correct image URL and handle fallback
     const imageUrl = item.imageUrl || (item.image ? item.image : '');
-    const imageHtml = imageUrl 
-        ? `<img src="${imageUrl}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='assets/placeholder-food.png';">`
-        : `<div class="image-placeholder"><i class="fas fa-utensils"></i><span>${item.name}</span></div>`;
-
+    
     menuItem.innerHTML = `
-        <div class="menu-item-image">
-            ${imageHtml}
-        </div>
-        <div class="menu-item-info">
-            <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
-            <div class="menu-item-price">${currencyUtil.formatPrice(item.price)}</div>
-            <p class="menu-item-description">${escapeHtml(item.description)}</p>
-            <div class="menu-item-actions">
-                <button class="btn btn-secondary view-details-btn" data-id="${item.id}">
-                    <i class="fas fa-eye"></i> Details
-                </button>
-                <div class="quantity-control">
-                    <button class="quantity-btn decrease" data-id="${item.id}">-</button>
-                    <span class="item-quantity" data-id="${item.id}">1</span>
-                    <button class="quantity-btn increase" data-id="${item.id}">+</button>
+        <div class="menu-card-inner">
+            <div class="menu-item-header">
+                <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
+                <div class="menu-item-price">${currencyUtil.formatPrice(item.price)}</div>
+            </div>
+            
+            <div class="menu-item-content">
+                <div class="menu-item-image-container">
+                    ${imageUrl 
+                        ? `<img src="${imageUrl}" alt="${escapeHtml(item.name)}" class="menu-item-image" onerror="this.onerror=null; this.src='assets/placeholder-food.png';">`
+                        : `<div class="image-placeholder"><i class="fas fa-utensils"></i></div>`
+                    }
                 </div>
-                <button class="btn btn-primary add-to-cart-btn" data-id="${item.id}">
-                    <i class="fas fa-shopping-cart"></i> Add
-                </button>
+                
+                <div class="menu-item-details">
+                    <p class="menu-item-description">${escapeHtml(item.description)}</p>
+                    
+                    <div class="menu-item-controls">
+                        <div class="quantity-control">
+                            <button class="quantity-btn decrease" data-id="${item.id}">-</button>
+                            <span class="item-quantity" data-id="${item.id}">1</span>
+                            <button class="quantity-btn increase" data-id="${item.id}">+</button>
+                        </div>
+                        
+                        <div class="item-buttons">
+                            <button class="btn-details" data-id="${item.id}">
+                                Details
+                            </button>
+                            <button class="btn-add-cart" data-id="${item.id}">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
 
     // Add event listeners
-    const viewDetailsBtn = menuItem.querySelector('.view-details-btn');
-    viewDetailsBtn.addEventListener('click', () => {
+    const detailsBtn = menuItem.querySelector('.btn-details');
+    detailsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         openItemModal(item);
     });
     
@@ -371,7 +449,7 @@ function createMenuItem(item) {
     });
 
     // Add to cart button
-    const addToCartBtn = menuItem.querySelector('.add-to-cart-btn');
+    const addToCartBtn = menuItem.querySelector('.btn-add-cart');
     addToCartBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const quantity = parseInt(quantitySpan.textContent);
@@ -384,14 +462,14 @@ function createMenuItem(item) {
         
         // Show added feedback
         addToCartBtn.classList.add('added');
-        addToCartBtn.innerHTML = '<i class="fas fa-check"></i> Added';
+        addToCartBtn.textContent = 'Added';
         
         // Show notification via cartManager (or reuse local notification)
         showAddToCartNotification(item, quantity);
         
         setTimeout(() => {
             addToCartBtn.classList.remove('added');
-            addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add';
+            addToCartBtn.textContent = 'Add';
         }, 1500);
     });
 
@@ -427,9 +505,13 @@ function showAddToCartNotification(item, quantity) {
             <i class="fas fa-check-circle"></i>
             <div class="notification-text">
                 <p><strong>${quantity}x ${escapeHtml(item.name)}</strong> added to cart</p>
-                <a href="cart.html" class="view-cart-link">View Cart</a>
+                <p class="item-price">${currencyUtil.formatPrice(item.price * quantity)}</p>
             </div>
             <button class="close-notification"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="notification-actions">
+            <a href="#" class="continue-shopping">Continue Shopping</a>
+            <a href="cart.html" class="view-cart">View Cart</a>
         </div>
     `;
     
@@ -439,13 +521,20 @@ function showAddToCartNotification(item, quantity) {
         notification.classList.remove('active');
     });
     
+    // Add event listener to continue shopping button
+    const continueBtn = notification.querySelector('.continue-shopping');
+    continueBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        notification.classList.remove('active');
+    });
+    
     // Show notification
     notification.classList.add('active');
     
-    // Hide notification after 3 seconds
+    // Hide notification after 5 seconds
     setTimeout(() => {
         notification.classList.remove('active');
-    }, 3000);
+    }, 5000);
 }
 
 /**
@@ -453,38 +542,48 @@ function showAddToCartNotification(item, quantity) {
  * @param {Object} item - Menu item data
  */
 function openItemModal(item) {
+    if (!modal) return;
+    
     const modalContent = modal.querySelector('.modal-content');
     
     modalContent.innerHTML = `
         <span class="close-modal">&times;</span>
-        <div class="modal-item-details">
-            <div class="modal-item-image">
-                <img src="${item.image || item.imageUrl}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='assets/placeholder-food.png';">
-            </div>
-            <div class="modal-item-info">
-                <h2>${escapeHtml(item.name)}</h2>
-                <div class="modal-item-price">${currencyUtil.formatPrice(item.price)}</div>
-                <div class="modal-item-category">${formatCategoryLabel(item.category)}</div>
-                <p>${escapeHtml(item.description)}</p>
-                <div class="modal-item-ingredients">
-                    <h3>Ingredients</h3>
-                    <ul>
-                        ${item.ingredients && item.ingredients.length ? item.ingredients.map(ingredient => `<li>${escapeHtml(ingredient)}</li>`).join('') : '<li>No ingredients listed</li>'}
-                    </ul>
+        <div class="modal-body">
+            <h2>${escapeHtml(item.name)}</h2>
+            <div class="modal-item-details">
+                <div class="modal-item-image">
+                    <img src="${item.image || item.imageUrl}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='assets/placeholder-food.png';">
                 </div>
-                <div class="modal-item-actions">
-                    <div class="quantity-selector">
-                        <button class="quantity-btn minus" data-id="${item.id}">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <span class="quantity">1</span>
-                        <button class="quantity-btn plus" data-id="${item.id}">
-                            <i class="fas fa-plus"></i>
+                <div class="modal-item-info">
+                    <div class="modal-item-price">${currencyUtil.formatPrice(item.price)}</div>
+                    <div class="modal-item-category">${formatCategoryLabel(item.category)}</div>
+                    
+                    <div class="modal-item-description">
+                        <h3>Description</h3>
+                        <p>${escapeHtml(item.description)}</p>
+                    </div>
+                    
+                    <div class="modal-item-ingredients">
+                        <h3>Ingredients</h3>
+                        <ul>
+                            ${item.ingredients && item.ingredients.length ? item.ingredients.map(ingredient => `<li>${escapeHtml(ingredient)}</li>`).join('') : '<li>No ingredients listed</li>'}
+                        </ul>
+                    </div>
+                    
+                    <div class="modal-item-actions">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus" data-id="${item.id}">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="quantity">1</span>
+                            <button class="quantity-btn plus" data-id="${item.id}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-modal" data-id="${item.id}">
+                            Add to Cart
                         </button>
                     </div>
-                    <button class="btn btn-primary add-to-cart-modal" data-id="${item.id}">
-                        Add to Cart
-                    </button>
                 </div>
             </div>
         </div>
@@ -513,7 +612,7 @@ function openItemModal(item) {
     const minusBtn = modalContent.querySelector('.minus');
     const plusBtn = modalContent.querySelector('.plus');
     const quantitySpan = modalContent.querySelector('.quantity');
-    const addToCartBtnModal = modalContent.querySelector('.add-to-cart-modal'); // Renamed variable
+    const addToCartBtnModal = modalContent.querySelector('.add-to-cart-modal');
     
     minusBtn.addEventListener('click', () => {
         let quantity = parseInt(quantitySpan.textContent);
@@ -531,7 +630,7 @@ function openItemModal(item) {
         }
     });
     
-    addToCartBtnModal.addEventListener('click', () => { // Use renamed variable
+    addToCartBtnModal.addEventListener('click', () => {
         const quantity = parseInt(quantitySpan.textContent);
         // Use cartManager to add the item
         cartManager.addItem(item, quantity);

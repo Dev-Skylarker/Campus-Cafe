@@ -20,9 +20,6 @@
                     <span>Campus Cafe</span>
                 </a>
             </div>
-            <div class="mobile-nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
             <nav>
                 <ul class="main-nav">
                     <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
@@ -42,6 +39,9 @@
                         <a href="#" class="logout-link" style="display: none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </li>
                 </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
             </nav>
             <div class="theme-toggle">
                 <i class="fas fa-moon"></i>
@@ -91,14 +91,14 @@
                 <div class="customer-info">
                     <h3>Customer Information</h3>
                     
-                    <div class="field-group">
-                        <label for="customerName" class="required-field">Your Name</label>
-                        <input type="text" id="customerName" class="form-control" placeholder="Enter your name" required>
+                    <div class="form-group">
+                        <label for="customerName">Your Name</label>
+                        <input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
                     </div>
                     
-                    <div class="field-group">
-                        <label for="customerPhone" class="required-field">Phone Number</label>
-                        <input type="tel" id="customerPhone" class="form-control" placeholder="Enter your phone number" required>
+                    <div class="form-group">
+                        <label for="customerPhone">Phone Number</label>
+                        <input type="tel" id="customerPhone" name="customerPhone" placeholder="Enter your phone number" required>
                     </div>
                 </div>
 
@@ -106,17 +106,17 @@
                 <div class="collection-options">
                     <h3>Collection Details</h3>
                     
-                    <div class="field-group">
-                        <label for="collectionTime" class="required-field">Collection Time</label>
-                        <select id="collectionTime" class="form-control" required>
+                    <div class="form-group">
+                        <label for="collectionTime">Collection Time</label>
+                        <select id="collectionTime" name="collectionTime" required>
                             <option value="">Select a time slot</option>
                             <!-- Time slots will be dynamically inserted here -->
                         </select>
                     </div>
                     
-                    <div class="field-group">
-                        <label for="collectionLocation" class="required-field">Collection Location</label>
-                        <select id="collectionLocation" class="form-control" required>
+                    <div class="form-group">
+                        <label for="collectionLocation">Collection Location</label>
+                        <select id="collectionLocation" name="collectionLocation" required>
                             <option value="">Select where to collect your order</option>
                             <optgroup label="Counter">
                                 <option value="counter-1">Counter 1</option>
@@ -139,14 +139,14 @@
                     </div>
                 </div>
 
-                <div class="special-instructions">
+                <div class="form-group">
                     <label for="specialInstructions">Special Instructions (Optional)</label>
-                    <textarea id="specialInstructions" class="form-control" 
+                    <textarea id="specialInstructions" name="specialInstructions" rows="5" 
                               placeholder="Add any special requests or allergies..."></textarea>
                 </div>
 
                 <button id="checkoutButton" class="btn btn-primary btn-block">
-                    Proceed to Checkout
+                    Proceed to Checkout with us
                 </button>
             </section>
         </div>
@@ -155,10 +155,6 @@
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="assets/logo.png" alt="Campus Cafe Logo">
-                    <span>Campus Cafe</span>
-                </div>
                 <div class="footer-links">
                     <h3>Quick Links</h3>
                     <ul>

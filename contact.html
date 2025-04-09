@@ -20,9 +20,6 @@
                     <span>Campus Cafe</span>
                 </a>
             </div>
-            <div class="mobile-nav-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
             <nav>
                 <ul class="main-nav">
                     <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
@@ -42,6 +39,9 @@
                         <a href="#" class="logout-link" style="display: none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </li>
                 </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
             </nav>
             <div class="theme-toggle">
                 <i class="fas fa-moon"></i>
@@ -167,10 +167,6 @@
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="assets/logo.png" alt="Campus Cafe Logo">
-                    <span>Campus Cafe</span>
-                </div>
                 <div class="footer-links">
                     <h3>Quick Links</h3>
                     <ul>
@@ -178,6 +174,7 @@
                         <li><a href="menu.html">Menu</a></li>
                         <li><a href="about.html">About</a></li>
                         <li><a href="contact.html">Contact</a></li>
+                        <li><a href="orders.html">My Orders</a></li>
                     </ul>
                 </div>
                 <div class="footer-social">
@@ -197,18 +194,6 @@
             </div>
         </div>
     </footer>
-
-    <div id="message-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-body text-center">
-                <i class="fas fa-check-circle success-icon"></i>
-                <h2>Message Sent!</h2>
-                <p>Thank you for contacting us. We'll get back to you as soon as possible.</p>
-                <button id="close-message-modal" class="btn btn-primary">Close</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Firebase SDK CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>

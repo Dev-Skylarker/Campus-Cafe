@@ -2,6 +2,8 @@
  * Orders Page JavaScript for Campus Cafe
  */
 
+import { navigationManager } from './utils/navigation.js';
+
 // DOM Elements
 const ordersContainer = document.getElementById('ordersContainer');
 const noOrdersMessage = document.getElementById('noOrdersMessage');
@@ -33,6 +35,17 @@ const STATUS_CONFIGS = {
 function initOrdersPage() {
     setupEventListeners();
     loadOrders('all'); // Load all orders initially
+    
+    // Check for order parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderIdParam = urlParams.get('order');
+    
+    if (orderIdParam) {
+        // Highlight and scroll to the specific order
+        setTimeout(() => { // Small delay to ensure orders are loaded
+            highlightOrder(orderIdParam);
+        }, 500);
+    }
 }
 
 /**
@@ -318,5 +331,42 @@ function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// Initialize orders page when DOM is loaded
-document.addEventListener('DOMContentLoaded', initOrdersPage); 
+/**
+ * Highlight a specific order and scroll to it
+ * @param {string} orderId - The order ID to highlight
+ */
+function highlightOrder(orderId) {
+    const orderCard = document.querySelector(`.order-card[data-id="${orderId}"]`);
+    
+    if (orderCard) {
+        // Add highlight class
+        orderCard.classList.add('highlighted-order');
+        
+        // Scroll to the order card
+        orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Show order details
+        const order = JSON.parse(localStorage.getItem('campus_cafe_orders') || '[]')
+            .find(order => order.id === orderId);
+            
+        if (order) {
+            setTimeout(() => {
+                showOrderDetails(order);
+            }, 800);
+        }
+        
+        // Remove highlight after a few seconds
+        setTimeout(() => {
+            orderCard.classList.remove('highlighted-order');
+        }, 5000);
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize navigation
+    navigationManager.init();
+    
+    // Initialize orders page
+    initOrdersPage();
+}); 

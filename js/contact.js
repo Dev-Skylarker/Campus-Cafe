@@ -4,9 +4,6 @@
 
 // DOM Elements
 const contactForm = document.getElementById('contact-form');
-const messageModal = document.getElementById('message-modal');
-const closeMessageModal = document.getElementById('close-message-modal');
-const closeModalX = document.querySelector('#message-modal .close-modal');
 
 // Initialize contact page
 function initContactPage() {
@@ -14,28 +11,6 @@ function initContactPage() {
     if (contactForm) {
         contactForm.addEventListener('submit', handleFormSubmit);
     }
-    
-    if (closeMessageModal) {
-        closeMessageModal.addEventListener('click', closeModal);
-    }
-    
-    if (closeModalX) {
-        closeModalX.addEventListener('click', closeModal);
-    }
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === messageModal) {
-            closeModal();
-        }
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && messageModal && messageModal.style.display === 'block') {
-            closeModal();
-        }
-    });
 }
 
 /**
@@ -63,7 +38,7 @@ function handleFormSubmit(e) {
     }
     
     // In a real application, you would send data to server
-    // Here we'll just show success message and reset the form
+    // Here we'll just save the message and reset the form
     
     // Create message object for demo purposes
     const contactMessage = {
@@ -78,9 +53,6 @@ function handleFormSubmit(e) {
     
     // Save to messages in localStorage for demo
     saveMessage(contactMessage);
-    
-    // Show success message
-    showSuccessModal();
     
     // Reset form
     contactForm.reset();
@@ -113,24 +85,6 @@ function showFormError(message) {
             errorEl.parentNode.removeChild(errorEl);
         }
     }, 5000);
-}
-
-/**
- * Show success modal
- */
-function showSuccessModal() {
-    if (messageModal) {
-        messageModal.style.display = 'block';
-    }
-}
-
-/**
- * Close the modal
- */
-function closeModal() {
-    if (messageModal) {
-        messageModal.style.display = 'none';
-    }
 }
 
 /**

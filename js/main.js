@@ -7,29 +7,18 @@ import { database, auth } from './utils/firebase.js';
 import { navigationManager } from './utils/navigation.js';
 
 // DOM Elements
+const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+const mainNav = document.querySelector('.main-nav');
 const contactForm = document.getElementById('contact-form');
 const featuredDishesContainer = document.getElementById('featured-dishes-container');
-
-// Initialize navigation
-document.addEventListener('DOMContentLoaded', () => {
-    navigationManager.init();
-    
-    // Initialize other components
-    loadFeaturedDishes();
-});
 
 // Authentication check - this should run first to ensure authorized access
 function checkAuth() {
     auth.onAuthStateChanged((user) => {
         if (!user) {
-            // User is not signed in, redirect to login page if on a protected page
-            const protectedPages = ['orders.html', 'admin.html'];
-            const currentPage = window.location.pathname.split('/').pop();
-            
-            if (protectedPages.includes(currentPage)) {
-                storageManager.clearAuthData();
-                window.location.href = 'login.html';
-            }
+            // User is not signed in, redirect to login page
+            storageManager.clearAuthData();
+            window.location.href = 'login.html';
         } else {
             // User is signed in, save to local storage and update UI
             storageManager.saveAuthenticatedUser(user);
@@ -95,6 +84,33 @@ const currencyUtil = {
         return `KSH ${price.toFixed(2)}`;
     }
 };
+
+// Toggle mobile navigation
+if (mobileNavToggle) {
+    mobileNavToggle.addEventListener('click', () => {
+        mainNav.classList.toggle('active');
+        
+        // Change icon based on menu state
+        const icon = mobileNavToggle.querySelector('i');
+        if (mainNav.classList.contains('active')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    });
+}
+
+// Close mobile nav when clicking outside
+document.addEventListener('click', (e) => {
+    if (mainNav && mainNav.classList.contains('active') && !e.target.closest('.mobile-nav-toggle') && !e.target.closest('.main-nav')) {
+        mainNav.classList.remove('active');
+        const icon = mobileNavToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+    }
+});
 
 /**
  * Validate email format
@@ -184,16 +200,16 @@ async function loadFeaturedDishes() {
             featuredDishesContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-utensils"></i>
-                    <p>No featured dishes yet. Check back soon!</p>
+                    <p>No featured dishes available at the moment.</p>
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error loading featured dishes:', error);
         featuredDishesContainer.innerHTML = `
-            <div class="empty-state">
+            <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Could not load featured dishes. Please try again later.</p>
+                <p>Failed to load featured dishes. Please try again later.</p>
             </div>
         `;
     }
@@ -306,21 +322,18 @@ function isMobileDevice() {
 }
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Initialize storage
         await storageManager.initStorage();
         
+        // Initialize navigation
+        navigationManager.init();
+        
         // Load featured dishes
-        const menuItems = await storageManager.getMenuItems();
-        const featuredDishes = menuItems.filter(item => item.featured);
-        displayFeaturedDishes(featuredDishes);
-        
-        // Update cart badge
-        updateCartBadge();
-        
+        loadFeaturedDishes();
     } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error('Error initializing page:', error);
     }
 });
 
@@ -422,4 +435,218 @@ function updateCartBadge() {
     
     badge.textContent = itemCount;
     badge.style.display = itemCount > 0 ? 'block' : 'none';
+}
+
+// Initialize navigation elements
+function initNavigation() {
+    // Mobile menu toggle
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    
+    if (mobileMenuToggle && navMenu) {
+        mobileMenuToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+            mobileMenuToggle.classList.toggle('active');
+        });
+    }
+
+    // User dropdown toggle
+    const userDropdownToggle = document.querySelector('.user-dropdown-toggle');
+    const userDropdownMenu = document.querySelector('.user-dropdown-menu');
+    
+    if (userDropdownToggle && userDropdownMenu) {
+        userDropdownToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            userDropdownMenu.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userDropdownToggle.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.remove('show');
+            }
+        });
+    }
+
+    // Check authentication and update navigation
+    updateNavigation();
+
+    // Listen for auth state changes (login/logout)
+    window.addEventListener('auth-state-changed', updateNavigation);
+}
+
+// Update navigation based on authentication status
+function updateNavigation() {
+    const isAuthenticated = localStorage.getItem('user') !== null;
+    const currentPath = window.location.pathname;
+    
+    // Elements to show/hide based on auth state
+    const loginOption = document.querySelector('.nav-login');
+    const logoutOption = document.querySelector('.nav-logout');
+    const userDropdown = document.querySelector('.user-dropdown');
+    const restrictedPages = ['/orders.html', '/profile.html', '/cart.html', '/checkout.html'];
+    
+    if (loginOption) loginOption.style.display = isAuthenticated ? 'none' : 'block';
+    if (logoutOption) logoutOption.style.display = isAuthenticated ? 'block' : 'none';
+    if (userDropdown) userDropdown.style.display = isAuthenticated ? 'flex' : 'none';
+    
+    // If user is not authenticated and tries to access a restricted page, redirect to login
+    if (!isAuthenticated) {
+        const isRestrictedPage = restrictedPages.some(page => 
+            currentPath.endsWith(page) || currentPath.includes(page));
+        
+        if (isRestrictedPage) {
+            window.location.href = 'login.html';
+        }
+    } else {
+        // Update user info in the navigation if available
+        const userData = JSON.parse(localStorage.getItem('user'));
+        const userNameElement = document.querySelector('.user-name');
+        
+        if (userData && userNameElement) {
+            userNameElement.textContent = userData.name || 'User';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
+    
+    // Initialize navigation and auth-related elements
+    initNavigation();
+    
+    // Dark mode toggle functionality
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+        // Set initial state based on localStorage
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.checked = true;
+        }
+    }
+
+    // Initialize quantity inputs
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    quantityInputs.forEach(input => {
+        const minusBtn = input.previousElementSibling;
+        const plusBtn = input.nextElementSibling;
+        
+        if (minusBtn && minusBtn.classList.contains('quantity-btn-minus')) {
+            minusBtn.addEventListener('click', () => {
+                if (input.value > 1) {
+                    input.value = parseInt(input.value) - 1;
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+        
+        if (plusBtn && plusBtn.classList.contains('quantity-btn-plus')) {
+            plusBtn.addEventListener('click', () => {
+                input.value = parseInt(input.value) + 1;
+                input.dispatchEvent(new Event('change'));
+            });
+        }
+    });
+
+    // Scroll to top button
+    const scrollTopBtn = document.getElementById('scroll-to-top');
+    if (scrollTopBtn) {
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('show');
+            } else {
+                scrollTopBtn.classList.remove('show');
+            }
+        });
+        
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+});
+
+// Toggle dark mode
+function toggleDarkMode() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    document.body.classList.toggle('dark-mode');
+    
+    if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('darkMode', 'enabled');
+        if (darkModeToggle) darkModeToggle.checked = true;
+    } else {
+        localStorage.setItem('darkMode', 'disabled');
+        if (darkModeToggle) darkModeToggle.checked = false;
+    }
+}
+
+// Function to toggle password visibility
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleBtn = document.querySelector(`#${inputId} + .toggle-password`);
+    
+    if (passwordInput) {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            passwordInput.type = 'password';
+            if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    }
+}
+
+// Handle user logout
+function logout() {
+    localStorage.removeItem('user');
+    localStorage.removeItem('campus_cafe_cart');
+    
+    // Dispatch auth state change event
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
+    // Redirect to login page
+    window.location.href = 'login.html';
+}
+
+// Toast notification function
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="${type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close"><i class="fas fa-times"></i></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast with animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // Auto close after 3 seconds
+    const autoCloseTimeout = setTimeout(() => {
+        closeToast(toast);
+    }, 3000);
+    
+    // Close button functionality
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => {
+        clearTimeout(autoCloseTimeout);
+        closeToast(toast);
+    });
+}
+
+// Close toast with animation
+function closeToast(toast) {
+    toast.classList.remove('show');
+    setTimeout(() => {
+        document.body.removeChild(toast);
+    }, 300);
 }
