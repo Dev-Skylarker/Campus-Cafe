@@ -143,8 +143,23 @@ export const navigationManager = {
                 headerContainer.appendChild(userProfileElement);
             }
             
+            // Add click event to toggle dropdown
+            const userAvatar = userProfileElement.querySelector('.user-avatar');
+            const dropdown = userProfileElement.querySelector('.user-dropdown');
+            
+            userAvatar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('active');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('active');
+            });
+            
             // Add event listener for sign out
-            document.getElementById('sign-out-btn').addEventListener('click', () => {
+            document.getElementById('sign-out-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 auth.signOut().then(() => {
                     // Sign-out successful, clear storage and redirect to login page
                     storageManager.clearAuthData();

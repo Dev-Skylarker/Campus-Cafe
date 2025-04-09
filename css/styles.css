@@ -3110,3 +3110,130 @@ body.dark-mode .admin-sidebar {
     padding: var(--spacing-xxl) 0;
     background-color: var(--background-secondary);
 }
+
+/* User Profile Styles */
+.user-profile {
+    position: relative;
+    margin-left: var(--spacing-md);
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Circular masking */
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-profile:hover .user-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-color: var(--secondary-color);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 220px;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    padding: var(--spacing-md);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.user-profile:hover .user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(5px);
+}
+
+/* Support for click activation */
+.user-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(5px);
+}
+
+.user-info {
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.user-name {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 3px;
+    color: var(--text-color);
+}
+
+.user-email {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    word-break: break-word;
+}
+
+#sign-out-btn {
+    width: 100%;
+    padding: 8px 15px;
+    margin-top: var(--spacing-sm);
+    transition: all 0.3s ease;
+}
+
+#sign-out-btn:hover {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .user-dropdown {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* Glowing effect on profile pic hover */
+.user-profile:hover .user-avatar {
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .user-dropdown {
+        width: 200px;
+        right: -80px;
+    }
+    
+    .user-dropdown:before {
+        right: 95px;
+    }
+}
+
+.user-profile::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(230, 126, 34, 0.2); /* Primary color overlay with transparency */
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.user-profile:hover::after {
+    opacity: 1;
+}
