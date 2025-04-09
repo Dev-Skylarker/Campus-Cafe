@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View and manage your orders at Campus Cafe">
+    <meta name="keywords" content="campus cafe orders, order tracking, food orders">
+    <meta name="author" content="Campus Cafe">
+    <title>Your Orders - Campus Cafe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+</head>
+<body class="light-mode">
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </a>
+            </div>
+            <nav>
+                <ul class="main-nav">
+                    <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="menu.html"><i class="fas fa-utensils"></i> Menu</a></li>
+                    <li><a href="about.html"><i class="fas fa-info-circle"></i> About</a></li>
+                    <li><a href="contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
+                    <li><a href="orders.html" class="active"><i class="fas fa-clipboard-list"></i> My Orders</a></li>
+                    <li>
+                        <a href="cart.html" class="cart-btn">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-badge">0</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="orders-header">
+            <div class="container">
+                <h1>My Orders</h1>
+                <p>Track your order history and status</p>
+            </div>
+        </section>
+
+        <section class="orders-list">
+            <div class="container">
+                <div class="order-tabs">
+                    <button class="order-tab active" data-status="all">All Orders</button>
+                    <button class="order-tab" data-status="pending">Pending</button>
+                    <button class="order-tab" data-status="preparing">Preparing</button>
+                    <button class="order-tab" data-status="ready">Ready for Collection</button>
+                    <button class="order-tab" data-status="completed">Completed</button>
+                </div>
+                
+                <div id="ordersContainer" class="orders-grid">
+                    <!-- Orders will be dynamically inserted here -->
+                </div>
+
+                <div id="noOrdersMessage" class="no-orders" style="display: none;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>No Orders Yet</h2>
+                    <p>Start ordering from our delicious menu!</p>
+                    <a href="menu.html" class="btn btn-primary">Browse Menu</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="orders.html">My Orders</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h3>Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-admin">
+                    <a href="admin/login.html" class="btn btn-small">Admin Login</a>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 Campus Cafe. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <script type="module" src="js/utils/firebase.js"></script>
+    <script type="module" src="js/utils/theme.js"></script>
+    <script type="module" src="js/utils/storage.js"></script>
+    <script type="module" src="js/utils/cart.js"></script>
+    <script type="module" src="js/orders.js"></script>
+</body>
+</html> 

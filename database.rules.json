@@ -1,0 +1,65 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "menu": {
+      ".read": true,
+      ".write": "auth != null && (root.child('admin').child(auth.uid).exists() || root.child('admin').child(auth.email.replace('.', ',')).exists())",
+      "$menuItem": {
+        ".validate": "newData.hasChildren(['name', 'price', 'description', 'category'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "price": { ".validate": "newData.isNumber() && newData.val() > 0" },
+        "description": { ".validate": "newData.isString()" },
+        "category": { ".validate": "newData.isString() && newData.val().matches(/^(appetizers|main-courses|desserts|drinks)$/)" },
+        "imageUrl": { ".validate": "newData.isString() || newData.val() == null" },
+        "availability": { ".validate": "newData.isString() && newData.val().matches(/^(available|unavailable)$/)" },
+        "featured": { ".validate": "newData.isBoolean()" }
+      }
+    },
+    "orders": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$orderId": {
+        ".read": "auth != null && data.child('userId').val() === auth.uid",
+        ".write": "auth != null && (newData.child('userId').val() === auth.uid || data.child('userId').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['userId', 'items', 'status', 'timestamp'])",
+        "userId": { ".validate": "newData.val() === auth.uid" },
+        "items": {
+          "$item": {
+            ".validate": "newData.hasChildren(['id', 'name', 'price', 'quantity'])",
+            "quantity": { ".validate": "newData.isNumber() && newData.val() > 0" },
+            "price": { ".validate": "newData.isNumber() && newData.val() > 0" }
+          }
+        },
+        "status": { 
+          ".validate": "newData.isString() && newData.val().matches(/^(pending|confirmed|preparing|ready|completed|cancelled)$/)"
+        },
+        "timestamp": { ".validate": "newData.isNumber() && newData.val() <= now" }
+      }
+    },
+    "messages": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "admin": {
+      ".read": "auth != null && (root.child('admin').child(auth.uid).exists() || root.child('admin').child(auth.email.replace('.', ',')).exists())",
+      ".write": "auth != null && (root.child('admin').child(auth.uid).exists() || root.child('admin').child(auth.email.replace('.', ',')).exists())",
+      "$adminId": {
+        ".validate": "newData.hasChildren(['email'])",
+        "email": { ".validate": "newData.isString() && newData.val().contains('@')" }
+      }
+    },
+    "users": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId",
+        ".validate": "newData.hasChildren(['email', 'name'])",
+        "email": { ".validate": "newData.isString() && newData.val().contains('@')" },
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "phone": { ".validate": "!newData.exists() || newData.isString()" },
+        "photoURL": { ".validate": "!newData.exists() || newData.isString()" },
+        "lastLogin": { ".validate": "!newData.exists() || newData.isString()" }
+      }
+    }
+  }
+} 

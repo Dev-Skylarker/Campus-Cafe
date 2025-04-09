@@ -1,0 +1,31 @@
+# Redirect users to login page
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Exclude the login page and assets from redirection
+    RewriteCond %{REQUEST_URI} !^/login\.html$
+    RewriteCond %{REQUEST_URI} !^/assets/
+    RewriteCond %{REQUEST_URI} !^/css/
+    RewriteCond %{REQUEST_URI} !^/js/utils/
+    
+    # Check if the user is not authenticated (handled by JavaScript)
+    # This is a fallback server-side protection
+    RewriteCond %{HTTP_COOKIE} !auth=([^;]+)
+    
+    # Redirect to login page
+    RewriteRule ^(.*)$ login.html [R,L]
+</IfModule>
+
+# Prevent direct access to sensitive files
+<FilesMatch "^(\.|database\.rules\.json|firebase\.json)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Set security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://*.firebaseio.com https://*.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;"
+</IfModule> 
