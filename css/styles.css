@@ -1174,7 +1174,7 @@ footer {
         transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         overflow-y: auto;
     }
-    
+
     .main-nav.active {
         transform: translateX(0);
         opacity: 1;
@@ -1249,7 +1249,7 @@ footer {
     .remove-item {
         margin-top: var(--spacing-sm);
     }
-    
+
     /* Modal improvements for mobile */
     .modal-content {
         margin: 0;
@@ -1260,15 +1260,15 @@ footer {
     }
     
     /* Menu item action buttons */
-    .menu-item-actions {
+.menu-item-actions {
         flex-direction: column;
         gap: var(--spacing-sm);
     }
     
     /* Improve notification positioning */
-    .cart-notification {
+.cart-notification {
         left: 20px;
-        right: 20px;
+    right: 20px;
         bottom: 20px;
         max-width: none;
     }
@@ -1322,13 +1322,13 @@ footer {
     }
     
     /* Compact form elements on small screens */
-    .field-group label {
+.field-group label {
         margin-bottom: 2px;
         font-size: 0.9rem;
-    }
-    
-    .field-group input,
-    .field-group select {
+}
+
+.field-group input,
+.field-group select {
         padding: 8px;
     }
     
@@ -1340,7 +1340,7 @@ footer {
     
     /* Menu item heading and prices */
     .menu-item-name {
-        font-size: 1.1rem;
+    font-size: 1.1rem;
     }
     
     .menu-item-description {
@@ -1354,14 +1354,14 @@ footer {
     
     /* Make modal more compact */
     .modal-content {
-        padding: var(--spacing-md);
+    padding: var(--spacing-md);
     }
     
     /* Tables should scroll horizontally on mobile */
     .cart-items-table, 
-    .order-items-table {
+.order-items-table {
         display: block;
-        width: 100%;
+    width: 100%;
         overflow-x: auto;
     }
 }

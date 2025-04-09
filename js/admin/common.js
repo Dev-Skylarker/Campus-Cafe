@@ -103,67 +103,67 @@ export const adminUtils = {
             return false;
         }
     },
-    
-    /**
-     * Initialize the current theme
-     */
+
+/**
+ * Initialize the current theme
+ */
     initTheme() {
-        // Check if dark mode is enabled in local storage
-        const isDarkMode = localStorage.getItem('dark_mode') === 'true';
+    // Check if dark mode is enabled in local storage
+    const isDarkMode = localStorage.getItem('dark_mode') === 'true';
+    
+    // Set body class accordingly
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        document.body.classList.remove('light-mode');
         
-        // Set body class accordingly
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            document.body.classList.remove('light-mode');
-            
-            // Update theme toggle icon if it exists
-            const themeToggle = document.querySelector('.theme-toggle i');
-            if (themeToggle) {
-                themeToggle.classList.remove('fa-moon');
-                themeToggle.classList.add('fa-sun');
-            }
-        } else {
-            document.body.classList.add('light-mode');
-            document.body.classList.remove('dark-mode');
+        // Update theme toggle icon if it exists
+        const themeToggle = document.querySelector('.theme-toggle i');
+        if (themeToggle) {
+            themeToggle.classList.remove('fa-moon');
+            themeToggle.classList.add('fa-sun');
         }
+    } else {
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+    }
     },
 
-    /**
-     * Get the current page name from the URL
-     * @returns {string} The current page name
-     */
+/**
+ * Get the current page name from the URL
+ * @returns {string} The current page name
+ */
     getCurrentPage() {
-        const path = window.location.pathname;
-        const filename = path.split('/').pop();
-        
-        // Return page name without .html extension
-        return filename.replace('.html', '');
-    },
+    const path = window.location.pathname;
+    const filename = path.split('/').pop();
     
-    /**
-     * Initialize login page specific functionality
-     */
+    // Return page name without .html extension
+    return filename.replace('.html', '');
+    },
+
+/**
+ * Initialize login page specific functionality
+ */
     initLoginPage() {
-        // Set up theme toggle on login page
-        const themeToggle = document.querySelector('.theme-toggle');
-        
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function() {
-                document.body.classList.toggle('dark-mode');
-                document.body.classList.toggle('light-mode');
-                
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                localStorage.setItem('dark_mode', isDarkMode);
-                
-                // Toggle icon
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('fa-moon');
-                    icon.classList.toggle('fa-sun');
-                }
-            });
-        }
-        
+    // Set up theme toggle on login page
+    const themeToggle = document.querySelector('.theme-toggle');
+    
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('dark_mode', isDarkMode);
+            
+            // Toggle icon
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-moon');
+                icon.classList.toggle('fa-sun');
+            }
+        });
+    }
+    
         // Clear any existing admin session on login page
         localStorage.removeItem('admin_session');
         localStorage.removeItem('forced_admin_auth');
