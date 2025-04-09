@@ -17,24 +17,50 @@ const storageManager = (function() {
      */
     async function initStorage() {
         try {
+            console.log('Initializing storage...');
+            
             // Check if user is authenticated before accessing database
             if (!auth.currentUser) {
-                console.log('User not authenticated yet, waiting for authentication...');
-                // Return without initializing - we'll handle this in the auth state change listener
+                console.log('User not authenticated yet, using default data for non-authenticated access');
+                
+                // For non-authenticated users, we'll still try to get public menu data
+                try {
+                    const menuItemsSnapshot = await menuItemsRef.once('value');
+                    if (menuItemsSnapshot.exists()) {
+                        console.log('Menu items loaded from Firebase for non-authenticated user');
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Error accessing menu data as non-authenticated user:', err);
+                }
+                
+                // If we couldn't get data, we'll use local defaults
+                localStorage.setItem('campus_cafe_menu_items', JSON.stringify(getDefaultMenuItems()));
+                console.log('Using local storage with default menu items for non-authenticated access');
                 return;
             }
 
-            console.log('User authenticated, initializing storage...');
+            console.log('User authenticated, initializing storage with Firebase...');
             
             // Check if menu items exist
             const menuItemsSnapshot = await menuItemsRef.once('value');
             if (!menuItemsSnapshot.exists()) {
+                console.log('No menu items found, creating defaults...');
                 const defaultMenuItems = getDefaultMenuItems();
                 // Create each menu item with a unique key
-                defaultMenuItems.forEach(async (item) => {
-                    const newItemRef = menuItemsRef.child(item.id);
-                    await newItemRef.set(item);
+                const batchUpdates = {};
+                defaultMenuItems.forEach((item) => {
+                    batchUpdates[item.id] = {
+                        ...item,
+                        imageUrl: item.imageUrl || 'default-image-url.jpg' // Ensure image URL is stored
+                    };
                 });
+                
+                // Use update to perform a batch update
+                await menuItemsRef.update(batchUpdates);
+                console.log('Default menu items created successfully');
+            } else {
+                console.log('Menu items already exist in Firebase');
             }
             
             // Check if orders exist
@@ -42,6 +68,7 @@ const storageManager = (function() {
             if (!ordersSnapshot.exists()) {
                 // Initialize with empty object instead of array for Firebase
                 await ordersRef.set({});
+                console.log('Orders storage initialized');
             }
             
             // Check if messages exist
@@ -49,6 +76,7 @@ const storageManager = (function() {
             if (!messagesSnapshot.exists()) {
                 // Initialize with empty object instead of array for Firebase
                 await messagesRef.set({});
+                console.log('Messages storage initialized');
             }
 
             // Check if admin exists
@@ -62,11 +90,18 @@ const storageManager = (function() {
                     password: 'CcAdmin123.'
                 };
                 await adminRef.child(sanitizedEmail).set(adminData);
+                console.log('Admin account initialized');
             }
             
             console.log('Storage initialized successfully');
         } catch (error) {
             console.error('Error initializing storage:', error);
+            
+            // Fallback to local storage if Firebase fails
+            if (!localStorage.getItem('campus_cafe_menu_items')) {
+                localStorage.setItem('campus_cafe_menu_items', JSON.stringify(getDefaultMenuItems()));
+                console.log('Fallback: Using local storage with default menu items');
+            }
         }
     }
     
@@ -76,24 +111,55 @@ const storageManager = (function() {
      */
     async function getMenuItems() {
         try {
+            // First try to get items from Firebase
             const snapshot = await menuItemsRef.once('value');
-            if (!snapshot.exists()) {
-                return [];
+            if (snapshot.exists()) {
+                // Convert Firebase object to array
+                const menuItems = [];
+                snapshot.forEach((childSnapshot) => {
+                    menuItems.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Cache result in localStorage for offline use
+                localStorage.setItem('campus_cafe_menu_items', JSON.stringify(menuItems));
+                console.log('Menu items loaded from Firebase:', menuItems.length);
+                return menuItems;
             }
             
-            // Convert Firebase object to array
-            const menuItems = [];
-            snapshot.forEach((childSnapshot) => {
-                menuItems.push({
-                    id: childSnapshot.key,
-                    ...childSnapshot.val()
-                });
-            });
+            // Try to get from localStorage if Firebase doesn't have data
+            const localMenuItems = localStorage.getItem('campus_cafe_menu_items');
+            if (localMenuItems) {
+                const menuItems = JSON.parse(localMenuItems);
+                console.log('Menu items loaded from localStorage:', menuItems.length);
+                return menuItems;
+            }
             
-            return menuItems;
+            // If all else fails, return default menu items
+            const defaultItems = getDefaultMenuItems();
+            console.log('Using default menu items:', defaultItems.length);
+            return defaultItems;
         } catch (error) {
-            console.error('Error getting menu items:', error);
-            return [];
+            console.error('Error getting menu items from Firebase:', error);
+            
+            // Fallback to localStorage
+            try {
+                const localMenuItems = localStorage.getItem('campus_cafe_menu_items');
+                if (localMenuItems) {
+                    const menuItems = JSON.parse(localMenuItems);
+                    console.log('Fallback: Menu items loaded from localStorage:', menuItems.length);
+                    return menuItems;
+                }
+            } catch (err) {
+                console.error('Error parsing localStorage menu items:', err);
+            }
+            
+            // Last resort: return default menu items
+            const defaultItems = getDefaultMenuItems();
+            console.log('Fallback: Using default menu items:', defaultItems.length);
+            return defaultItems;
         }
     }
     
@@ -128,7 +194,11 @@ const storageManager = (function() {
         }
         
         try {
-            await menuItemsRef.child(item.id).set(item);
+            await menuItemsRef.child(item.id).set({
+                ...item,
+                imageUrl: item.imageUrl || 'default-image-url.jpg' // Ensure image URL is stored
+            });
+            console.log('Menu item saved:', item.id);
             return item;
         } catch (error) {
             console.error('Error saving menu item:', error);

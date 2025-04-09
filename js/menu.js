@@ -3,7 +3,7 @@
  */
 
 // Import the storage manager
-import { storageManager } from './utils/storage.js';
+import storageManager from './utils/storage.js';
 import { cartManager } from './utils/cart.js';
 import { auth } from './utils/firebase.js';
 
@@ -47,17 +47,30 @@ const currencyUtil = {
  */
 async function initMenuPage() {
     try {
+        // Initialize storage first
+        await storageManager.initStorage();
+        
         // Load all menu items and store them for efficient filtering
         allMenuItems = await storageManager.getMenuItems();
+        
+        // Check if we got menu items
+        if (!allMenuItems || allMenuItems.length === 0) {
+            console.warn("No menu items found or storage not initialized properly");
+            allMenuItems = [];
+        }
         
         // Filter out unavailable items
         allMenuItems = allMenuItems.filter(item => 
             !item.availability || item.availability === 'available'
         );
         
+        // Initialize cart manager
+        if (typeof cartManager.init === 'function') {
+            cartManager.init();
+        }
+        
         displayMenuItems(allMenuItems); // Display all items initially
         setupEventListeners();
-        // cartManager.updateCartBadge() is called by cartManager.init() - no need to call it here unless explicitly needed
     } catch (error) {
         console.error("Error loading menu items:", error);
         if (menuContainer) {
@@ -65,8 +78,18 @@ async function initMenuPage() {
                 <div class="error-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>Failed to load menu items. Please try again later.</p>
+                    <button id="retry-btn" class="btn btn-primary mt-3">Retry</button>
                 </div>
             `;
+            
+            // Add retry button functionality
+            const retryBtn = document.getElementById('retry-btn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    menuContainer.innerHTML = `<div class="loader"></div>`;
+                    setTimeout(initMenuPage, 1000); // Retry after a short delay
+                });
+            }
         }
     }
 }
@@ -653,31 +676,44 @@ function formatPickupTime(isoTimeString) {
 }
 
 /**
- * Handle hash change to open menu item from URL
+ * Handle hash change to open item modal
  */
 async function handleHashChange() {
-    const hash = window.location.hash.slice(1);
-    if (hash) {
-        try {
-            // Find menu item with this ID
-            const item = await storageManager.getMenuItemById(hash);
-            
-            if (item) {
-                openItemModal(item);
-            }
-        } catch (error) {
-            console.error("Error loading menu item from hash:", error);
+    const hash = window.location.hash.substring(1);
+    if (!hash) return;
+    
+    try {
+        // Show loading state in modal
+        if (modalItemName && modalItemImage && modalItemDescription && modalItemPrice) {
+            modalItemName.textContent = 'Loading...';
+            modalItemImage.innerHTML = '<div class="loader"></div>';
+            modalItemDescription.textContent = '';
+            modalItemPrice.textContent = '';
+            modal.style.display = 'block';
         }
+        
+        // Get item by ID from Firebase
+        const item = await storageManager.getMenuItemById(hash);
+        
+        if (item) {
+            openItemModal(item);
+        } else {
+            closeItemModal();
+            console.error('Item not found:', hash);
+        }
+    } catch (error) {
+        console.error('Error loading item details:', error);
+        closeItemModal();
     }
 }
 
 /**
  * Load all menu items from storage
  */
-function loadMenuItems(category) {
+async function loadMenuItems(category) {
     try {
         // Get menu items
-        const menuItems = storageManager.getMenuItems();
+        const menuItems = await storageManager.getMenuItems();
 
         // Update category labels for Campus Cafe
         menuItems.forEach(item => {
@@ -802,6 +838,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
     
-    // Initialize the page
-    initMenuPage();
+    // Auth state listener to ensure proper initialization
+    auth.onAuthStateChanged((user) => {
+        console.log("Auth state changed:", user ? "User logged in" : "User not logged in");
+        // Initialize the page regardless of login state - we'll show all items even to non-logged in users
+        initMenuPage();
+    });
 });
