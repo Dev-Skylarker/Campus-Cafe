@@ -13,7 +13,6 @@ export const navigationManager = {
     init() {
         this.setupMobileNav();
         this.setupUserState();
-        this.setupLogout();
         this.setupCartBadge();
         this.listenForAuthChanges();
     },
@@ -78,34 +77,6 @@ export const navigationManager = {
         const user = storageManager.getAuthenticatedUser();
         if (user) {
             this.updateUserStatus(user);
-        }
-    },
-    
-    /**
-     * Setup logout functionality
-     */
-    setupLogout() {
-        const logoutLink = document.querySelector('.logout-link');
-        
-        if (logoutLink) {
-            logoutLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Sign out from Firebase
-                auth.signOut().then(() => {
-                    // Clear local user data
-                    storageManager.clearAuthData();
-                    
-                    // Update UI for logged out state
-                    this.updateUserStatus(null);
-                    
-                    // Redirect to home page after logout
-                    window.location.href = 'index.html';
-                }).catch(error => {
-                    console.error('Logout error:', error);
-                    alert('Failed to log out. Please try again.');
-                });
-            });
         }
     },
     
@@ -193,14 +164,12 @@ export const navigationManager = {
      */
     updateUserStatus(user) {
         const loginLink = document.querySelector('.login-link');
-        const logoutLink = document.querySelector('.logout-link');
         const userDisplay = document.querySelector('.user-display');
         const ordersLink = document.querySelector('a[href="orders.html"]');
         
         if (user) {
             // User is logged in
             if (loginLink) loginLink.style.display = 'none';
-            if (logoutLink) logoutLink.style.display = 'inline-flex';
             if (ordersLink) ordersLink.style.display = 'flex';
             
             // Display user name if available
@@ -212,7 +181,6 @@ export const navigationManager = {
         } else {
             // User is logged out
             if (loginLink) loginLink.style.display = 'inline-flex';
-            if (logoutLink) logoutLink.style.display = 'none';
             if (userDisplay) userDisplay.style.display = 'none';
         }
     }
